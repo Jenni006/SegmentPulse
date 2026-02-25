@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
 
@@ -7,9 +7,13 @@ services:
     container_name: influxdb
     ports:
       - "8086:8086"
+    volumes:
+      - influxdb-storage:/var/lib/influxdb2
 
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - "3000:3000"
+  probe:
+    build: ./probe
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb-storage:
