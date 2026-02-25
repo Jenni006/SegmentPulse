@@ -1,28 +1,29 @@
 from ping3 import ping
+from influxdb_client import InfluxDBClient, Point, WritePrecision
 import time
 
-segments = {
-    "Customer": "8.8.8.8",
-    "ONT": "1.1.1.1",
-    "Gateway": "8.8.4.4"
-}
+INFLUX_URL = "http://influxdb:8086"
+TOKEN = "my-token"
+ORG = "segmentpulse"
+BUCKET = "network"
+
+client = InfluxDBClient(url=INFLUX_URL, token=TOKEN, org=ORG)
+write_api = client.write_api()
+
+target = "8.8.8.8"
 
 while True:
 
-    print("Probing...\n")
+    latency = ping(target)
 
-    for name, ip in segments.items():
+    if latency:
 
-        rtt = ping(ip, timeout=2)
+        point = Point("latency") \
+            .tag("host", target) \
+            .field("value", latency)
 
-        if rtt is None:
+        write_api.write(bucket=BUCKET, record=point)
 
-            print(name, "DOWN")
-
-        else:
-
-            print(name, round(rtt*1000,2), "ms")
-
-    print("\n-------------------\n")
+        print("Latency:", latency)
 
     time.sleep(5)
